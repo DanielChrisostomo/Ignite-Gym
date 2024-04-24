@@ -20,7 +20,6 @@ const SignIn = () => {
   return (
     <ScrollView contentContainerStyle={{flexGrow: 1}} showsVerticalScrollIndicator={false}>
     <VStack flex={1} px={10} pb={16}>
-      <Text>Ola mundo</Text>
       <Image
         source={BackgroundImg}
         defaultSource={BackgroundImg}
