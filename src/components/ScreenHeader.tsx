@@ -7,7 +7,7 @@ type Props = {
 const ScreenHeader = ({title}: Props ) => {
   return (
     <Center bgColor="gray.600" pb={6} pt={16}>
-        <Heading color="gray.100" fontSize="xl">{title}</Heading>
+        <Heading color="gray.100" fontSize="xl" fontFamily="heading">{title}</Heading>
     </Center>
   )
 }
