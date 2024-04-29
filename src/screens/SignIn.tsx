@@ -1,16 +1,29 @@
-import { useNavigation } from "@react-navigation/native";
-import { VStack, Image, Text, Center, Heading, ScrollView } from "native-base";
+import React from "react";
 import { useForm, Controller } from "react-hook-form";
+import { useNavigation } from "@react-navigation/native";
+import {
+  VStack,
+  Image,
+  Text,
+  Center,
+  Heading,
+  ScrollView,
+  useToast,
+} from "native-base";
+
+import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
+
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 
-import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
+import { useAuth } from "@hooks/useAuth";
 
 import LogoSVG from "@assets/logo.svg";
 import BackgroundImg from "@assets/background.png";
 
 import Input from "@components/Input";
 import Button from "@components/Button";
+import { AppError } from "@utils/AppError";
 
 type FormDataProps = {
   email: string;
@@ -19,10 +32,19 @@ type FormDataProps = {
 
 const logInScheme = yup.object({
   email: yup.string().required("Informe o email.").email("E-mail inválido"),
-  password: yup.string().required("Informe a senha.").min(6, "a senha deve ter pelo menos 6 dígitos"),
+  password: yup
+    .string()
+    .required("Informe a senha.")
+    .min(6, "a senha deve ter pelo menos 6 dígitos"),
 });
 
 const SignIn = () => {
+  const [isLoading, setIsLoading] = React.useState(false)
+
+  const { signIn } = useAuth();
+
+  const navigation = useNavigation<AuthNavigatorRoutesProps>();
+
   const {
     control,
     handleSubmit,
@@ -31,10 +53,24 @@ const SignIn = () => {
     resolver: yupResolver(logInScheme),
   });
 
-  const navigation = useNavigation<AuthNavigatorRoutesProps>();
+  const toast = useToast();
 
-  function handleLogIn({ email, password }: FormDataProps) {
-    console.log(email, password);
+  async function handleLogIn({ email, password }: FormDataProps) {
+    try {
+      setIsLoading(true)
+      await signIn(email, password);
+      setIsLoading(false)
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError ? error.message : "Não foi possível entrar. Tente novamente mais tarde.";
+
+      setIsLoading(false)
+      return toast.show({
+        title: title,
+        placement: "top",
+        bgColor: "red.500",
+      });
+    }
   }
 
   function handleNewAccount() {
@@ -103,7 +139,7 @@ const SignIn = () => {
             )}
           />
 
-          <Button title="Acessar" onPress={handleSubmit(handleLogIn)} />
+          <Button title="Acessar" onPress={handleSubmit(handleLogIn)} isLoading={isLoading} />
         </Center>
 
         <Center mt={24}>

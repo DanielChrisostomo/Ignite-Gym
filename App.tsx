@@ -6,6 +6,7 @@ import Routes from "@routes/index";
 
 import { THEME } from "./src/theme/index";
 import { Loading } from "@components/Loading";
+import { AuthContextProvider } from "@contexts/AuthContext";
 
 export default function App() {
 
@@ -16,7 +17,11 @@ export default function App() {
   return (
     <NativeBaseProvider theme={THEME}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      {fontsLoaded ? <Routes /> : <Loading />}
+
+        <AuthContextProvider>
+        {fontsLoaded ? <Routes /> : <Loading />}
+        </AuthContextProvider>
+
     </NativeBaseProvider>
   );
 }
