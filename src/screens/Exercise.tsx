@@ -1,31 +1,92 @@
+import React from "react";
 import { TouchableOpacity } from "react-native";
-import {
-  HStack,
-  Heading,
-  Icon,
-  VStack,
-  Text,
-  Image,
-  Box,
-  ScrollView,
-} from "native-base";
+import { HStack, Heading, Icon, VStack, Text, Image, Box, ScrollView, useToast} from "native-base";
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
 import { AppNavigatorRoutesProps } from "@routes/app.routes";
+
+import { api } from "@services/api";
+import { AppError } from "@utils/AppError";
 
 import BodySVG from "@assets/body.svg";
 import SeriesSVG from "@assets/series.svg";
 import RepetitionsSVG from "@assets/repetitions.svg";
 
 import Button from "@components/Button";
+import { ExerciseDTO } from "@dtos/ExerciseDTO";
+import { Loading } from "@components/Loading";
+
+type RouteParamsProps = {
+  exerciseId: string
+}
 
 const Exercise = () => {
+  const [sendingRegister, setSendingRegister] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [exercise, setExercise] = React.useState<ExerciseDTO>({} as ExerciseDTO)
   const navigation = useNavigation<AppNavigatorRoutesProps>();
+
+  const route = useRoute()
+  const { exerciseId } = route.params as RouteParamsProps
+
+  const toast = useToast();
 
   function handleGoBack() {
     navigation.goBack();
   }
+
+  async function fetchExerciseDetails( exerciseId: string ) {
+    try {
+      setIsLoading(true)
+      const { data } = await api.get(`/exercises/${exerciseId}`)
+      setExercise(data)
+      
+    } catch (error) {
+      const isAppError = error instanceof AppError
+      const title = isAppError ? error.message : "Não foi possível carregar os detalhes do exercício."
+
+      toast.show({
+        title,
+        placement: "top",
+        bgColor: "red.500"
+      })
+
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function handleExerciseHistoryRegister() {
+    try {
+      setSendingRegister(true)
+      await api.post("/history", { exercise_id :exerciseId })
+
+      toast.show({
+        title: "Parabéns! Exercício registrado no seu histórico.",
+        placement: "top",
+        bgColor: "green.700"
+      })
+
+      navigation.navigate("history")
+      
+    } catch (error) {
+      const isAppError = error instanceof AppError
+      const title = isAppError ? error.message : "Não foi possível registrar o exercício."
+
+      toast.show({
+        title,
+        placement: "top",
+        bgColor: "red.500"
+      })
+    } finally {
+      setSendingRegister(false)
+    }
+  }
+
+  React.useEffect(()=> {
+    fetchExerciseDetails(exerciseId)
+  },[exerciseId])
 
   return (
     <VStack flex={1}>
@@ -41,7 +102,7 @@ const Exercise = () => {
             alignItems="center"
           >
             <Heading color="gray.100" fontSize="lg" flexShrink={1} fontFamily="heading">
-              Puxada Frontal
+              {exercise.name}
             </Heading>
 
             <HStack alignItems="center">
@@ -52,25 +113,24 @@ const Exercise = () => {
                 ml={1}
                 textTransform="capitalize"
               >
-                costas
+               {exercise.group}
               </Text>
             </HStack>
           </HStack>
         </VStack>
 
-      <ScrollView >
-        <VStack p={8}>
+        {isLoading ? <Loading /> : <VStack p={8}>
+          <Box rounded="lg" mb={3} overflow="hidden" >
           <Image
             w="full"
             h={80}
             source={{
-              uri: "https://conteudo.imguol.com.br/c/entretenimento/0c/2019/12/03/remada-unilateral-com-halteres-1575402100538_v2_600x600.jpg",
+              uri: `${api.defaults.baseURL}/exercise/demo/${exercise.demo}`,
             }}
             alt="Nome no exercício"
-            mb={3}
             resizeMode="cover"
-            rounded="lg"
           />
+          </Box>
 
           <Box bg="gray.600" rounded="md" pb={4} px={4}>
             <HStack
@@ -82,22 +142,21 @@ const Exercise = () => {
               <HStack>
                 <SeriesSVG />
                 <Text color="gray.200" ml={2}>
-                  3 séries
+                  {exercise.series} séries
                 </Text>
               </HStack>
 
               <HStack>
                 <RepetitionsSVG />
                 <Text color="gray.200" ml={2}>
-                  12 repetições
+                {exercise.repetitions} repetições
                 </Text>
               </HStack>
             </HStack>
 
-            <Button title="Marcar como realizado" />
+            <Button title="Marcar como realizado" isLoading={sendingRegister} onPress={handleExerciseHistoryRegister} />
           </Box>
-        </VStack>
-      </ScrollView>
+        </VStack>}
     </VStack>
   );
 };
