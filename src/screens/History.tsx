@@ -3,12 +3,13 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Heading, VStack, SectionList, Text, useToast } from "native-base";
 
 import { api } from "@services/api";
-
-import HistoryCard from "@components/HistoryCard";
-import ScreenHeader from "@components/ScreenHeader";
 import { AppError } from "@utils/AppError";
-
 import { HistoryByDayDTO } from "@dtos/HistoryGroupByDayDTO";
+
+import ScreenHeader from "@components/ScreenHeader";
+import HistoryCard from "@components/HistoryCard";
+import { Loading } from "@components/Loading";
+
 
 const History = () => {
   const [isLoading, setIsLoading] = React.useState(false)
@@ -43,7 +44,7 @@ useFocusEffect(React.useCallback(() => {
     <VStack flex={1}>
       <ScreenHeader title="Histórico de Exercícios" />
 
-      <SectionList 
+      {isLoading ? <Loading /> : <SectionList 
         sections={exercises}
         keyExtractor={item => item.id}
         renderItem={({item}) => (
@@ -63,7 +64,7 @@ useFocusEffect(React.useCallback(() => {
           </Text>
         )}
         showsVerticalScrollIndicator={false}
-      />
+      />}
 
     </VStack>
   )
